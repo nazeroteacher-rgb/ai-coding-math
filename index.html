@@ -228,6 +228,72 @@ body::before {
 .tab-panel.active { display: block; }
 
 /* ── Worksheets ── */
+
+/* ── Track sections ── */
+.track-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+.track-box {
+  border-radius: var(--radius); padding: 22px;
+  border: 2px solid;
+}
+.track-box.track-a {
+  background: linear-gradient(135deg, #fff0eb, #ffe4d9);
+  border-color: rgba(232,71,42,0.25);
+}
+.track-box.track-b {
+  background: linear-gradient(135deg, #edf3ff, #dde8ff);
+  border-color: rgba(26,42,108,0.2);
+}
+.track-header {
+  display: flex; align-items: center; gap: 10px; margin-bottom: 16px;
+}
+.track-badge {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 36px; height: 36px; border-radius: 10px;
+  font-family: 'Black Han Sans', sans-serif; font-size: 18px; color: white; flex-shrink: 0;
+}
+.track-a .track-badge { background: linear-gradient(135deg, var(--primary-dark), var(--primary)); }
+.track-b .track-badge { background: linear-gradient(135deg, #1a2a6c, #2a3a8c); }
+.track-title {
+  font-family: 'Black Han Sans', sans-serif; font-size: 18px;
+}
+.track-a .track-title { color: var(--primary-dark); }
+.track-b .track-title { color: #1a2a6c; }
+.track-empty { text-align: center; padding: 28px 12px; color: var(--muted); font-size: 13px; }
+.track-empty-icon { font-size: 32px; margin-bottom: 8px; }
+
+/* upload zone track */
+.upload-tracks { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px; }
+.upload-track-zone {
+  border: 2px dashed; border-radius: var(--radius); padding: 28px 16px;
+  text-align: center; cursor: pointer; transition: all 0.2s;
+}
+.upload-track-zone.track-a-zone {
+  border-color: rgba(232,71,42,0.35); background: #fff8f5;
+}
+.upload-track-zone.track-a-zone:hover, .upload-track-zone.track-a-zone.dragover {
+  border-color: var(--primary); background: #fff0ea; box-shadow: var(--glow);
+}
+.upload-track-zone.track-b-zone {
+  border-color: rgba(26,42,108,0.25); background: #f0f4ff;
+}
+.upload-track-zone.track-b-zone:hover, .upload-track-zone.track-b-zone.dragover {
+  border-color: #1a2a6c; background: #e8eeff; box-shadow: 0 0 24px rgba(26,42,108,0.18);
+}
+.upload-track-zone .zone-icon { font-size: 32px; margin-bottom: 8px; }
+.upload-track-zone .zone-title {
+  font-family: 'Black Han Sans', sans-serif; font-size: 17px; margin-bottom: 6px;
+}
+.track-a-zone .zone-title { color: var(--primary-dark); }
+.track-b-zone .zone-title { color: #1a2a6c; }
+.upload-track-zone p { font-size: 12px; color: var(--muted); margin-bottom: 12px; line-height: 1.6; }
+.btn-b { background: linear-gradient(135deg, #1a2a6c, #2a4aac); box-shadow: 0 4px 14px rgba(26,42,108,0.25); }
+.btn-b:hover { transform: translateY(-2px); box-shadow: 0 0 24px rgba(26,42,108,0.3); }
+
+@media (max-width: 600px) {
+  .track-grid { grid-template-columns: 1fr; }
+  .upload-tracks { grid-template-columns: 1fr; }
+}
+
 .ws-empty { text-align: center; padding: 52px; color: var(--muted); }
 .ws-empty-icon { font-size: 48px; margin-bottom: 14px; }
 .ws-empty p { font-size: 14px; line-height: 1.8; }
@@ -258,6 +324,12 @@ body::before {
   box-shadow: 0 3px 12px rgba(232,71,42,0.25);
 }
 .dl-btn:hover { transform: translateY(-1px); box-shadow: var(--glow); }
+.dl-btn-b {
+  background: linear-gradient(135deg, #1a2a6c, #2a4aac);
+  box-shadow: 0 3px 12px rgba(26,42,108,0.25);
+}
+.dl-btn-b:hover { transform: translateY(-1px); box-shadow: 0 0 24px rgba(26,42,108,0.3); }
+
 
 /* ── Notice ── */
 .notice-list { display: flex; flex-direction: column; gap: 14px; }
@@ -474,10 +546,24 @@ body::before {
 
   <div class="tab-content">
     <div class="tab-panel active" id="tab-worksheet">
-      <div id="ws-list-home">
-        <div class="ws-empty">
-          <div class="ws-empty-icon">📭</div>
-          <p>아직 등록된 활동지가 없습니다.<br>교사가 활동지를 등록하면 여기서 다운로드할 수 있어요.</p>
+      <div class="track-grid">
+        <div class="track-box track-a">
+          <div class="track-header">
+            <div class="track-badge">A</div>
+            <div class="track-title">A 트랙 활동지</div>
+          </div>
+          <div id="ws-list-home-a">
+            <div class="track-empty"><div class="track-empty-icon">📭</div><p>등록된 활동지가 없습니다</p></div>
+          </div>
+        </div>
+        <div class="track-box track-b">
+          <div class="track-header">
+            <div class="track-badge">B</div>
+            <div class="track-title">B 트랙 활동지</div>
+          </div>
+          <div id="ws-list-home-b">
+            <div class="track-empty"><div class="track-empty-icon">📭</div><p>등록된 활동지가 없습니다</p></div>
+          </div>
         </div>
       </div>
     </div>
@@ -536,24 +622,39 @@ body::before {
       ></iframe>
     </div>
 
-    <div class="section-title">📤 활동지 등록</div>
-    <div class="upload-zone" id="upload-zone"
-      onclick="document.getElementById('file-input').click()"
-      ondragover="handleDragOver(event)"
-      ondragleave="handleDragLeave(event)"
-      ondrop="handleDrop(event)">
-      <div class="upload-zone-icon">📎</div>
-      <p>파일을 드래그하거나 클릭하여 선택하세요<br><small style="color:#c4907a">(PDF, 한글, Word, 이미지 등 모든 형식 가능)</small></p>
-      <button class="btn" onclick="event.stopPropagation(); document.getElementById('file-input').click()">📁 파일 선택</button>
-      <input type="file" id="file-input" class="upload-input" multiple onchange="handleFiles(this.files)">
+    <div class="section-title">📤 트랙별 활동지 등록</div>
+    <div class="upload-tracks">
+      <div class="upload-track-zone track-a-zone" id="upload-zone-a"
+        onclick="document.getElementById('file-input-a').click()"
+        ondragover="handleDragOverA(event)"
+        ondragleave="handleDragLeaveA()"
+        ondrop="handleDropA(event)">
+        <div class="zone-icon">📕</div>
+        <div class="zone-title">A 트랙 활동지</div>
+        <p>파일을 드래그하거나<br>클릭하여 선택</p>
+        <button class="btn" onclick="event.stopPropagation(); document.getElementById('file-input-a').click()">📁 A트랙 파일 선택</button>
+        <input type="file" id="file-input-a" class="upload-input" multiple onchange="handleFiles(this.files, 'a')">
+      </div>
+      <div class="upload-track-zone track-b-zone" id="upload-zone-b"
+        onclick="document.getElementById('file-input-b').click()"
+        ondragover="handleDragOverB(event)"
+        ondragleave="handleDragLeaveB()"
+        ondrop="handleDropB(event)">
+        <div class="zone-icon">📘</div>
+        <div class="zone-title">B 트랙 활동지</div>
+        <p>파일을 드래그하거나<br>클릭하여 선택</p>
+        <button class="btn btn-b" onclick="event.stopPropagation(); document.getElementById('file-input-b').click()">📁 B트랙 파일 선택</button>
+        <input type="file" id="file-input-b" class="upload-input" multiple onchange="handleFiles(this.files, 'b')">
+      </div>
     </div>
-    <div id="ws-list-teacher" style="margin-top:20px;"></div>
+    <div class="track-grid" id="ws-list-teacher"></div>
   </div>
 </div>
 
 <script>
 const TEACHER_PW = '2026';
-const STORAGE_KEY = 'worksheets_v1';
+const STORAGE_KEY_A = 'worksheets_a_v1';
+const STORAGE_KEY_B = 'worksheets_b_v1';
 let authed = false;
 
 function showPage(name) {
@@ -592,9 +693,12 @@ function doLogin() {
   }
 }
 function refreshIframe() { const f = document.getElementById('teacher-iframe'); f.src = f.src; }
-function handleDragOver(e) { e.preventDefault(); document.getElementById('upload-zone').classList.add('dragover'); }
-function handleDragLeave() { document.getElementById('upload-zone').classList.remove('dragover'); }
-function handleDrop(e) { e.preventDefault(); document.getElementById('upload-zone').classList.remove('dragover'); handleFiles(e.dataTransfer.files); }
+function handleDragOverA(e) { e.preventDefault(); document.getElementById('upload-zone-a').classList.add('dragover'); }
+function handleDragLeaveA() { document.getElementById('upload-zone-a').classList.remove('dragover'); }
+function handleDropA(e) { e.preventDefault(); document.getElementById('upload-zone-a').classList.remove('dragover'); handleFiles(e.dataTransfer.files, 'a'); }
+function handleDragOverB(e) { e.preventDefault(); document.getElementById('upload-zone-b').classList.add('dragover'); }
+function handleDragLeaveB() { document.getElementById('upload-zone-b').classList.remove('dragover'); }
+function handleDropB(e) { e.preventDefault(); document.getElementById('upload-zone-b').classList.remove('dragover'); handleFiles(e.dataTransfer.files, 'b'); }
 
 function getFileIcon(name) {
   const ext = name.split('.').pop().toLowerCase();
@@ -606,38 +710,57 @@ function getFileIcon(name) {
   if (['zip','rar'].includes(ext)) return '🗜️';
   return '📎';
 }
-function handleFiles(files) {
+function handleFiles(files, track) {
   if (!files || files.length === 0) return;
-  const list = loadWS(); let count = 0;
+  const list = loadWS(track); let count = 0;
   Array.from(files).forEach(file => {
     const reader = new FileReader();
     reader.onload = e => {
       list.push({ id: Date.now() + Math.random(), name: file.name, date: new Date().toLocaleDateString('ko-KR'), url: e.target.result });
-      if (++count === files.length) { saveWS(list); renderWS(); showToast(`${files.length}개 활동지가 등록되었습니다 🎉`); }
+      if (++count === files.length) { saveWS(track, list); renderWS(); showToast(`${track.toUpperCase()}트랙 ${files.length}개 활동지 등록 완료 🎉`); }
     };
     reader.readAsDataURL(file);
   });
 }
-function deleteWS(id) { saveWS(loadWS().filter(w => w.id !== id)); renderWS(); showToast('삭제되었습니다'); }
+function deleteWS(track, id) { saveWS(track, loadWS(track).filter(w => w.id !== id)); renderWS(); showToast('삭제되었습니다'); }
 
 function renderWS() {
-  const list = loadWS();
-  const emptyHTML = `<div class="ws-empty"><div class="ws-empty-icon">📭</div><p>아직 등록된 활동지가 없습니다.<br>교사가 활동지를 등록하면 여기서 다운로드할 수 있어요.</p></div>`;
-  const cardsHTML = (actions) => `<div class="ws-list">${list.map(ws => `
-    <div class="ws-card">
-      <div class="ws-info">
-        <div class="ws-icon">${getFileIcon(ws.name)}</div>
-        <div><div class="ws-name">${ws.name}</div><div class="ws-date">${ws.date} 등록</div></div>
-      </div>${actions(ws)}</div>`).join('')}</div>`;
+  ['a', 'b'].forEach(track => {
+    const list = loadWS(track);
+    const isA = track === 'a';
+    const dlBtnClass = isA ? 'dl-btn' : 'dl-btn dl-btn-b';
+    const trackLabel = isA ? 'A' : 'B';
+    const emptyHTML = `<div class="track-empty"><div class="track-empty-icon">📭</div><p>등록된 활동지가 없습니다</p></div>`;
+    const cardsHTML = (actions) => `<div class="ws-list">${list.map(ws => `
+      <div class="ws-card">
+        <div class="ws-info">
+          <div class="ws-icon">${getFileIcon(ws.name)}</div>
+          <div><div class="ws-name">${ws.name}</div><div class="ws-date">${ws.date} 등록</div></div>
+        </div>${actions(ws)}</div>`).join('')}</div>`;
 
-  document.getElementById('ws-list-home').innerHTML = list.length === 0 ? emptyHTML
-    : cardsHTML(ws => `<a class="dl-btn" href="${ws.url}" download="${ws.name}">⬇ 다운로드</a>`);
-  document.getElementById('ws-list-teacher').innerHTML = list.length === 0 ? ''
-    : `<div style="font-weight:700;margin-bottom:12px;color:var(--primary-dark);font-size:14px;">등록된 활동지 (${list.length}개)</div>`
-    + cardsHTML(ws => `<div class="ws-actions"><a class="dl-btn" href="${ws.url}" download="${ws.name}">⬇ 다운로드</a><button class="btn btn-danger" onclick="deleteWS(${ws.id})">🗑</button></div>`);
+    const homeEl = document.getElementById(`ws-list-home-${track}`);
+    if (homeEl) homeEl.innerHTML = list.length === 0 ? emptyHTML
+      : cardsHTML(ws => `<a class="${dlBtnClass}" href="${ws.url}" download="${ws.name}">⬇ 다운로드</a>`);
+
+    const teacherEl = document.getElementById('ws-list-teacher');
+    if (teacherEl) {
+      const boxId = `teacher-track-${track}`;
+      let box = document.getElementById(boxId);
+      if (!box) {
+        box = document.createElement('div');
+        box.id = boxId;
+        box.className = `track-box track-${track}`;
+        box.innerHTML = `<div class="track-header"><div class="track-badge">${trackLabel}</div><div class="track-title">${trackLabel} 트랙 활동지</div></div><div class="track-inner-${track}"></div>`;
+        teacherEl.appendChild(box);
+      }
+      const inner = box.querySelector(`.track-inner-${track}`);
+      if (inner) inner.innerHTML = list.length === 0 ? emptyHTML
+        : cardsHTML(ws => `<div class="ws-actions"><a class="${dlBtnClass}" href="${ws.url}" download="${ws.name}">⬇ 다운로드</a><button class="btn btn-danger" style="padding:7px 11px" onclick="deleteWS(\'${track}\',${ws.id})">🗑</button></div>`);
+    }
+  });
 }
-function loadWS() { try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]'); } catch { return []; } }
-function saveWS(list) { localStorage.setItem(STORAGE_KEY, JSON.stringify(list)); }
+function loadWS(track) { try { const k = track==='a' ? STORAGE_KEY_A : STORAGE_KEY_B; return JSON.parse(localStorage.getItem(k) || '[]'); } catch { return []; } }
+function saveWS(track, list) { const k = track==='a' ? STORAGE_KEY_A : STORAGE_KEY_B; localStorage.setItem(k, JSON.stringify(list)); }
 function showToast(msg) {
   const t = document.getElementById('toast');
   t.textContent = '✓ ' + msg; t.classList.add('show');

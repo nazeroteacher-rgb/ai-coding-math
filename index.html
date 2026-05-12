@@ -1,0 +1,649 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI코딩·수학 융합 페스티벌</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700;800;900&family=Black+Han+Sans&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg: #fdf6f0;
+  --surface: #ffffff;
+  --surface2: #fef3ec;
+  --primary: #e8472a;
+  --primary-dark: #c73318;
+  --primary-light: #ff6b4a;
+  --coral: #ff8c69;
+  --coral-light: #ffb8a0;
+  --ivory: #fdf6f0;
+  --ivory-dark: #f5e8da;
+  --accent: #f59e0b;
+  --warm: #ff7043;
+  --green: #2d9e6b;
+  --red: #dc2626;
+  --text: #2d1a0e;
+  --text2: #5c3a2a;
+  --muted: #9c6b52;
+  --border: #f0d8c8;
+  --radius: 16px;
+  --shadow: 0 2px 16px rgba(232,71,42,0.08);
+  --shadow-md: 0 6px 32px rgba(232,71,42,0.14);
+  --glow: 0 0 24px rgba(232,71,42,0.25);
+}
+
+body {
+  background: var(--bg);
+  font-family: 'Noto Sans KR', sans-serif;
+  color: var(--text);
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* ── 배경 패턴 ── */
+body::before {
+  content: '';
+  position: fixed; inset: 0;
+  background-image:
+    radial-gradient(circle at 15% 20%, rgba(255,140,105,0.12) 0%, transparent 40%),
+    radial-gradient(circle at 85% 10%, rgba(232,71,42,0.08) 0%, transparent 35%),
+    radial-gradient(circle at 70% 80%, rgba(255,176,160,0.1) 0%, transparent 40%),
+    radial-gradient(circle at 5% 80%, rgba(245,158,11,0.07) 0%, transparent 35%);
+  pointer-events: none; z-index: 0;
+}
+
+.page { display: none; position: relative; z-index: 1; }
+.page.active { display: block; }
+
+/* ── Header ── */
+.header {
+  background: rgba(253,246,240,0.92);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-bottom: 2px solid var(--border);
+  padding: 0 28px; height: 64px;
+  display: flex; align-items: center; justify-content: space-between;
+  position: sticky; top: 0; z-index: 100;
+  box-shadow: 0 2px 12px rgba(232,71,42,0.08);
+}
+.header-title {
+  font-family: 'Black Han Sans', sans-serif;
+  font-size: 17px;
+  background: linear-gradient(90deg, var(--primary-dark), var(--primary), var(--warm));
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+}
+.header-nav { display: flex; gap: 8px; }
+.nav-btn {
+  background: transparent;
+  border: 1.5px solid var(--border);
+  color: var(--muted); padding: 7px 16px; border-radius: 50px;
+  font-size: 13px; font-family: 'Noto Sans KR', sans-serif;
+  cursor: pointer; transition: all 0.2s; font-weight: 600;
+}
+.nav-btn:hover { background: var(--ivory-dark); color: var(--text); border-color: var(--coral-light); }
+.nav-btn.active {
+  background: linear-gradient(135deg, var(--primary), var(--primary-light));
+  border-color: transparent; color: white;
+  box-shadow: var(--glow);
+}
+
+/* ── Hero ── */
+.hero {
+  position: relative; text-align: center;
+  padding: 72px 24px 64px; overflow: hidden;
+}
+.hero-bg {
+  position: absolute; inset: 0; z-index: 0;
+  background: linear-gradient(160deg, #fff5f0 0%, #fde8dc 40%, #ffd5c2 100%);
+}
+/* 물결 장식 */
+.hero-wave {
+  position: absolute; bottom: 0; left: 0; right: 0; z-index: 0;
+  height: 60px; overflow: hidden;
+}
+.hero-wave svg { display: block; width: 100%; height: 100%; }
+
+/* 큰 원형 장식 */
+.hero-circle {
+  position: absolute; border-radius: 50%; pointer-events: none;
+}
+.hero-circle.c1 {
+  width: 300px; height: 300px;
+  top: -80px; right: -60px;
+  background: radial-gradient(circle, rgba(232,71,42,0.12) 0%, transparent 70%);
+}
+.hero-circle.c2 {
+  width: 200px; height: 200px;
+  bottom: 20px; left: -40px;
+  background: radial-gradient(circle, rgba(255,140,105,0.15) 0%, transparent 70%);
+}
+.hero-circle.c3 {
+  width: 150px; height: 150px;
+  top: 30%; right: 10%;
+  background: radial-gradient(circle, rgba(245,158,11,0.1) 0%, transparent 70%);
+}
+
+.hero-deco {
+  position: absolute; pointer-events: none; user-select: none;
+  font-size: 60px; opacity: 0.12;
+}
+.hero-deco.d1 { top: 12%; left: 6%; transform: rotate(-15deg); }
+.hero-deco.d2 { top: 18%; right: 7%; transform: rotate(12deg); font-size: 48px; }
+.hero-deco.d3 { bottom: 20%; left: 8%; transform: rotate(8deg); font-size: 44px; }
+.hero-deco.d4 { bottom: 14%; right: 6%; transform: rotate(-8deg); font-size: 52px; }
+
+.hero-badge {
+  position: relative; z-index: 1;
+  display: inline-flex; align-items: center; gap: 8px;
+  background: rgba(232,71,42,0.08);
+  border: 1.5px solid rgba(232,71,42,0.25);
+  color: var(--primary); padding: 6px 18px; border-radius: 50px;
+  font-size: 12px; font-weight: 700; letter-spacing: 0.8px;
+  text-transform: uppercase; margin-bottom: 24px;
+}
+.badge-dot {
+  width: 7px; height: 7px; background: var(--primary); border-radius: 50%;
+  animation: pulse 1.6s ease-in-out infinite;
+}
+@keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:0.4;transform:scale(1.5)} }
+
+.hero h1 {
+  position: relative; z-index: 1;
+  font-family: 'Black Han Sans', sans-serif;
+  font-size: 72px; line-height: 1.15; margin-bottom: 10px;
+  color: var(--text);
+}
+.hero h1 .sub {
+  display: block; font-size: 22px; margin-bottom: 6px;
+  color: #1a2a6c; letter-spacing: 1px; font-size: 42px; text-shadow: 2px 3px 8px rgba(26,42,108,0.18);
+}
+
+.hero h1 .main-title {
+  color: #1a2a6c;
+  text-shadow: 3px 5px 14px rgba(26,42,108,0.22), 1px 2px 4px rgba(26,42,108,0.15);
+}
+.hero-desc {
+  position: relative; z-index: 1;
+  color: var(--text2); font-size: 15px; margin-bottom: 36px; line-height: 1.8;
+}
+
+.drive-btn {
+  position: relative; z-index: 1;
+  display: inline-flex; align-items: center; gap: 12px;
+  background: linear-gradient(135deg, var(--primary-dark), var(--primary), var(--warm));
+  color: white; padding: 17px 42px; border-radius: 50px;
+  font-size: 16px; font-weight: 800; font-family: 'Noto Sans KR', sans-serif;
+  text-decoration: none; transition: all 0.25s;
+  box-shadow: var(--glow), 0 8px 28px rgba(232,71,42,0.3);
+  border: none; cursor: pointer;
+}
+.drive-btn:hover { transform: translateY(-3px) scale(1.02); box-shadow: 0 0 40px rgba(232,71,42,0.4), 0 12px 40px rgba(232,71,42,0.25); }
+.drive-hint { position: relative; z-index: 1; color: var(--muted); font-size: 12px; margin-top: 14px; }
+
+/* 페스티벌 배너 */
+.fest-banner {
+  position: relative; z-index: 1;
+  display: flex; justify-content: center; gap: 0;
+  margin-top: 52px; flex-wrap: wrap;
+}
+.fest-item {
+  text-align: center; padding: 18px 32px;
+  border-right: 1px solid rgba(232,71,42,0.15);
+}
+.fest-item:last-child { border-right: none; }
+.fest-emoji { font-size: 32px; margin-bottom: 6px; }
+.fest-num {
+  font-family: 'Black Han Sans', sans-serif; font-size: 28px;
+  color: var(--primary); line-height: 1;
+}
+.fest-label { font-size: 11px; color: var(--muted); margin-top: 4px; font-weight: 700; letter-spacing: 0.5px; }
+
+/* ── Tabs ── */
+.tabs-wrap { max-width: 820px; margin: 0 auto; padding: 0 20px; position: relative; z-index: 1; }
+.tabs {
+  display: flex; margin: 28px 0 0;
+  background: var(--surface); border-radius: var(--radius) var(--radius) 0 0;
+  border: 1.5px solid var(--border); border-bottom: none; overflow: hidden;
+}
+.tab-btn {
+  flex: 1; padding: 15px 20px; border: none; background: transparent;
+  font-size: 14px; font-weight: 700; font-family: 'Noto Sans KR', sans-serif;
+  color: var(--muted); cursor: pointer; transition: all 0.2s;
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+  border-right: 1.5px solid var(--border); position: relative;
+}
+.tab-btn:last-child { border-right: none; }
+.tab-btn.active { color: var(--primary); background: #fff8f5; }
+.tab-btn.active::after {
+  content:''; position:absolute; bottom:0; left:0; right:0; height:3px;
+  background: linear-gradient(90deg, var(--primary-dark), var(--primary-light));
+}
+.tab-btn:hover:not(.active) { background: var(--ivory-dark); color: var(--text); }
+.tab-content { max-width: 820px; margin: 0 auto 52px; padding: 0 20px; position: relative; z-index: 1; }
+.tab-panel {
+  background: var(--surface); border: 1.5px solid var(--border);
+  border-radius: 0 0 var(--radius) var(--radius); padding: 28px;
+  box-shadow: var(--shadow); display: none;
+}
+.tab-panel.active { display: block; }
+
+/* ── Worksheets ── */
+.ws-empty { text-align: center; padding: 52px; color: var(--muted); }
+.ws-empty-icon { font-size: 48px; margin-bottom: 14px; }
+.ws-empty p { font-size: 14px; line-height: 1.8; }
+.ws-list { display: flex; flex-direction: column; gap: 12px; }
+.ws-card {
+  border: 1.5px solid var(--border); border-radius: 12px; padding: 16px 20px;
+  display: flex; align-items: center; justify-content: space-between;
+  background: var(--ivory); transition: all 0.2s;
+}
+.ws-card:hover {
+  background: #fff3ee; border-color: var(--coral-light);
+  transform: translateY(-2px); box-shadow: var(--shadow);
+}
+.ws-info { display: flex; align-items: center; gap: 14px; }
+.ws-icon {
+  width: 46px; height: 46px; border-radius: 10px; flex-shrink: 0;
+  background: linear-gradient(135deg, var(--primary), var(--coral));
+  display: flex; align-items: center; justify-content: center; font-size: 22px;
+}
+.ws-name { font-weight: 700; font-size: 14px; color: var(--text); }
+.ws-date { font-size: 12px; color: var(--muted); margin-top: 2px; }
+.dl-btn {
+  background: linear-gradient(135deg, var(--primary-dark), var(--primary));
+  color: white; border: none; padding: 9px 20px; border-radius: 8px;
+  font-size: 13px; font-weight: 700; font-family: 'Noto Sans KR', sans-serif;
+  cursor: pointer; display: inline-flex; align-items: center; gap: 6px;
+  transition: all 0.2s; text-decoration: none; white-space: nowrap;
+  box-shadow: 0 3px 12px rgba(232,71,42,0.25);
+}
+.dl-btn:hover { transform: translateY(-1px); box-shadow: var(--glow); }
+
+/* ── Notice ── */
+.notice-list { display: flex; flex-direction: column; gap: 14px; }
+.notice-card {
+  border-left: 4px solid var(--coral);
+  background: linear-gradient(135deg, #fff8f5, #fff3ee);
+  border-radius: 0 12px 12px 0; padding: 18px 22px;
+  border-top: 1px solid var(--border);
+  border-right: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+}
+.notice-title { font-weight: 700; font-size: 14px; margin-bottom: 10px; color: var(--primary-dark); }
+.notice-body { font-size: 13px; color: var(--text2); line-height: 2; }
+
+/* ── Login ── */
+.login-wrap {
+  min-height: calc(100vh - 64px); display: flex; align-items: center; justify-content: center;
+  background: linear-gradient(160deg, var(--ivory) 0%, var(--ivory-dark) 100%);
+}
+.login-card {
+  background: var(--surface); border: 1.5px solid var(--border); border-radius: 24px;
+  padding: 52px 44px; width: 100%; max-width: 400px;
+  box-shadow: var(--shadow-md); text-align: center; position: relative; overflow: hidden;
+}
+.login-card::before {
+  content: '';
+  position: absolute; top: 0; left: 0; right: 0; height: 4px;
+  background: linear-gradient(90deg, var(--primary-dark), var(--primary), var(--coral), var(--accent));
+}
+.login-card::after {
+  content: '';
+  position: absolute; top: -60px; right: -60px;
+  width: 180px; height: 180px; border-radius: 50%;
+  background: radial-gradient(circle, rgba(232,71,42,0.07) 0%, transparent 70%);
+}
+.login-icon { font-size: 56px; margin-bottom: 18px; }
+.login-card h2 { font-family: 'Black Han Sans', sans-serif; font-size: 26px; margin-bottom: 6px; color: var(--text); }
+.login-card p { color: var(--muted); font-size: 14px; margin-bottom: 32px; }
+.login-input {
+  width: 100%; padding: 14px; border: 1.5px solid var(--border); border-radius: 12px;
+  background: var(--ivory);
+  font-size: 24px; font-family: 'Noto Sans KR', sans-serif; outline: none; color: var(--text);
+  text-align: center; letter-spacing: 12px; margin-bottom: 14px; transition: all 0.2s;
+}
+.login-input:focus { border-color: var(--coral); box-shadow: 0 0 0 3px rgba(232,71,42,0.1); }
+.login-error { color: var(--red); font-size: 13px; margin-bottom: 12px; font-weight: 600; }
+.login-btn {
+  width: 100%;
+  background: linear-gradient(135deg, var(--primary-dark), var(--primary));
+  color: white; border: none; padding: 14px; border-radius: 12px;
+  font-size: 15px; font-weight: 800; font-family: 'Noto Sans KR', sans-serif;
+  cursor: pointer; transition: all 0.2s;
+  box-shadow: 0 4px 16px rgba(232,71,42,0.3);
+}
+.login-btn:hover { transform: translateY(-2px); box-shadow: var(--glow); }
+
+/* ── Teacher Main ── */
+.main { max-width: 980px; margin: 0 auto; padding: 40px 24px; position: relative; z-index: 1; }
+.section-title {
+  font-size: 15px; font-weight: 800; color: var(--primary-dark);
+  margin-bottom: 18px; display: flex; align-items: center; gap: 10px;
+}
+.section-title::after { content:''; flex:1; height:2px; background: linear-gradient(90deg, rgba(232,71,42,0.3), transparent); }
+
+/* ── iframe ── */
+.iframe-wrap {
+  background: var(--surface); border: 1.5px solid var(--border);
+  border-radius: var(--radius); overflow: hidden;
+  box-shadow: var(--shadow-md); margin-bottom: 44px;
+}
+.iframe-toolbar {
+  background: linear-gradient(135deg, #fff8f5, #fff3ee);
+  border-bottom: 1.5px solid var(--border);
+  padding: 12px 18px; display: flex; align-items: center; justify-content: space-between;
+}
+.iframe-label { font-size: 13px; font-weight: 700; color: var(--primary); display: flex; align-items: center; gap: 8px; }
+.refresh-btn {
+  background: linear-gradient(135deg, var(--primary-dark), var(--primary));
+  color: white; border: none; padding: 7px 16px; border-radius: 8px;
+  font-size: 12px; font-weight: 700; font-family: 'Noto Sans KR', sans-serif;
+  cursor: pointer; transition: all 0.2s; box-shadow: 0 2px 8px rgba(232,71,42,0.2);
+}
+.refresh-btn:hover { transform: translateY(-1px); box-shadow: var(--glow); }
+#teacher-iframe { width: 100%; height: 640px; border: none; display: block; }
+
+/* ── Upload ── */
+.upload-zone {
+  border: 2px dashed var(--coral-light); border-radius: var(--radius); padding: 44px;
+  text-align: center; background: #fff9f7; transition: all 0.2s; cursor: pointer;
+}
+.upload-zone:hover, .upload-zone.dragover {
+  border-color: var(--primary); background: #fff3ee;
+  box-shadow: var(--glow);
+}
+.upload-zone-icon { font-size: 44px; margin-bottom: 12px; }
+.upload-zone p { color: var(--muted); font-size: 14px; margin-bottom: 18px; line-height: 1.8; }
+.upload-input { display: none; }
+
+.btn {
+  background: linear-gradient(135deg, var(--primary-dark), var(--primary));
+  color: white; border: none; padding: 11px 24px; border-radius: 10px;
+  font-size: 14px; font-weight: 700; font-family: 'Noto Sans KR', sans-serif;
+  cursor: pointer; transition: all 0.2s; display: inline-flex; align-items: center; gap: 8px;
+  box-shadow: 0 4px 14px rgba(232,71,42,0.25);
+}
+.btn:hover { transform: translateY(-2px); box-shadow: var(--glow); }
+.btn-danger { background: linear-gradient(135deg, #b91c1c, #dc2626); box-shadow: 0 4px 14px rgba(220,38,38,0.2); }
+.btn-danger:hover { box-shadow: 0 0 20px rgba(220,38,38,0.3); }
+.ws-actions { display: flex; gap: 8px; }
+
+/* ── Toast ── */
+.toast {
+  position: fixed; bottom: 28px; right: 28px;
+  background: linear-gradient(135deg, var(--primary-dark), var(--primary));
+  color: white; padding: 14px 24px; border-radius: 12px;
+  font-size: 14px; font-weight: 700;
+  box-shadow: var(--glow), 0 8px 32px rgba(232,71,42,0.25); z-index: 9999;
+  opacity: 0; transform: translateY(16px); transition: all 0.3s; pointer-events: none;
+}
+.toast.show { opacity: 1; transform: translateY(0); }
+
+/* ── Responsive ── */
+@media (max-width: 600px) {
+  .header { padding: 0 16px; }
+  .header-title { font-size: 14px; }
+  .nav-btn { padding: 6px 12px; font-size: 12px; }
+  .hero { padding: 48px 16px 40px; }
+  .hero h1 { font-size: 32px; }
+  .hero h1 .sub { font-size: 16px; }
+  .drive-btn { padding: 14px 24px; font-size: 14px; }
+  .fest-item { padding: 14px 18px; }
+  .tabs-wrap, .tab-content { padding: 0 12px; }
+  .tab-panel { padding: 20px 14px; }
+  .main { padding: 28px 14px; }
+  #teacher-iframe { height: 520px; }
+}
+</style>
+</head>
+<body>
+
+<!-- Header -->
+<header class="header">
+  <div class="header-title">🎉 AI코딩·수학 융합 페스티벌</div>
+  <nav class="header-nav">
+    <button class="nav-btn active" onclick="showPage('home')">🏠 홈</button>
+    <button class="nav-btn" id="teacher-nav-btn" onclick="showPage('teacher')">🔒 교사 로그인</button>
+  </nav>
+</header>
+
+<div class="toast" id="toast"></div>
+
+<!-- ══════════════════ HOME PAGE ══════════════════ -->
+<div id="page-home" class="page active">
+  <div class="hero">
+    <div class="hero-bg"></div>
+    <div class="hero-circle c1"></div>
+    <div class="hero-circle c2"></div>
+    <div class="hero-circle c3"></div>
+    <div class="hero-deco d1">🤖</div>
+    <div class="hero-deco d2">🧮</div>
+    <div class="hero-deco d3">💡</div>
+    <div class="hero-deco d4">⚡</div>
+    <div class="hero-wave">
+      <svg viewBox="0 0 1440 60" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M0,30 C360,60 1080,0 1440,30 L1440,60 L0,60 Z" fill="#fdf6f0"/>
+      </svg>
+    </div>
+
+    <div class="hero-badge">
+      <span class="badge-dot"></span>
+      활동지 제출 진행 중
+    </div>
+
+    <h1>
+      <span class="sub">AI코딩 · 수학 융합</span>
+      <span class="main-title">페스티벌</span>
+    </h1>
+    <p class="hero-desc">
+      아래 버튼을 클릭하면 제출용 구글 드라이브 폴더로 이동합니다<br>
+      본인 폴더를 찾아 활동지를 업로드해 주세요 🎯
+    </p>
+
+    <a class="drive-btn" href="https://drive.google.com/drive/folders/1v3YSyJjRRa6LNoAVBABKSCNCZIphIYg0" target="_blank">
+      🗂️ &nbsp;구글 드라이브로 이동하여 제출하기
+    </a>
+    <div class="drive-hint">폴더 안에서 본인 이름 폴더를 찾아 파일을 업로드해 주세요</div>
+
+    <div class="fest-banner">
+      <div class="fest-item">
+        <div class="fest-emoji">🤖</div>
+        <div class="fest-label">AI 코딩</div>
+      </div>
+      <div class="fest-item">
+        <div class="fest-emoji">✕</div>
+        <div class="fest-label">융합</div>
+      </div>
+      <div class="fest-item">
+        <div class="fest-emoji">🧮</div>
+        <div class="fest-label">수학</div>
+      </div>
+      <div class="fest-item">
+        <div class="fest-emoji">🏆</div>
+        <div class="fest-label">페스티벌</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="tabs-wrap">
+    <div class="tabs">
+      <button class="tab-btn active" onclick="switchTab('worksheet')">📥 활동지 다운로드</button>
+      <button class="tab-btn" onclick="switchTab('notice')">📢 제출 안내</button>
+    </div>
+  </div>
+
+  <div class="tab-content">
+    <div class="tab-panel active" id="tab-worksheet">
+      <div id="ws-list-home">
+        <div class="ws-empty">
+          <div class="ws-empty-icon">📭</div>
+          <p>아직 등록된 활동지가 없습니다.<br>교사가 활동지를 등록하면 여기서 다운로드할 수 있어요.</p>
+        </div>
+      </div>
+    </div>
+    <div class="tab-panel" id="tab-notice">
+      <div class="notice-list">
+        <div class="notice-card">
+          <div class="notice-title">📌 제출 방법</div>
+          <div class="notice-body">
+            1. 위의 <strong style="color:var(--primary)">구글 드라이브로 이동하여 제출하기</strong> 버튼을 클릭합니다.<br>
+            2. 드라이브에서 <strong style="color:var(--primary-dark)">본인의 학번_이름 폴더</strong>를 찾아 클릭합니다.<br>
+            3. 활동지 파일을 해당 폴더에 <strong style="color:var(--warm)">업로드</strong>합니다.
+          </div>
+        </div>
+        <div class="notice-card">
+          <div class="notice-title">⚠️ 주의사항</div>
+          <div class="notice-body">
+            • 반드시 <strong style="color:var(--primary)">본인 폴더</strong>에 제출해 주세요.<br>
+            • 파일명에 <strong style="color:var(--primary-dark)">학번과 이름</strong>을 포함해 주세요.<br>
+            • 제출 완료 여부는 교사에게 확인받으세요.
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════ LOGIN PAGE ══════════════════ -->
+<div id="page-login" class="page">
+  <div class="login-wrap">
+    <div class="login-card">
+      <div class="login-icon">🔐</div>
+      <h2>교사 로그인</h2>
+      <p>비밀번호를 입력하세요</p>
+      <input type="password" class="login-input" id="pw-input" placeholder="••••"
+        onkeydown="if(event.key==='Enter') doLogin()">
+      <div class="login-error" id="login-error" style="display:none">비밀번호가 틀렸습니다.</div>
+      <button class="login-btn" onclick="doLogin()">로그인</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════ TEACHER PAGE ══════════════════ -->
+<div id="page-teacher" class="page">
+  <div class="main">
+    <div class="section-title">📊 실시간 제출 현황</div>
+    <div class="iframe-wrap">
+      <div class="iframe-toolbar">
+        <div class="iframe-label">🗂️ 구글 드라이브 연동 — 실시간 제출 현황</div>
+        <button class="refresh-btn" onclick="refreshIframe()">🔄 새로고침</button>
+      </div>
+      <iframe
+        id="teacher-iframe"
+        src="https://script.google.com/macros/s/AKfycbw9aP2HoQh8-uCiOq-XkMC3d-H1ZxsTiilcCdd3prAZBL-twn8J-qJO7Nig_KCFuc_t/exec"
+        title="제출 현황"
+        allow="same-origin"
+      ></iframe>
+    </div>
+
+    <div class="section-title">📤 활동지 등록</div>
+    <div class="upload-zone" id="upload-zone"
+      onclick="document.getElementById('file-input').click()"
+      ondragover="handleDragOver(event)"
+      ondragleave="handleDragLeave(event)"
+      ondrop="handleDrop(event)">
+      <div class="upload-zone-icon">📎</div>
+      <p>파일을 드래그하거나 클릭하여 선택하세요<br><small style="color:#c4907a">(PDF, 한글, Word, 이미지 등 모든 형식 가능)</small></p>
+      <button class="btn" onclick="event.stopPropagation(); document.getElementById('file-input').click()">📁 파일 선택</button>
+      <input type="file" id="file-input" class="upload-input" multiple onchange="handleFiles(this.files)">
+    </div>
+    <div id="ws-list-teacher" style="margin-top:20px;"></div>
+  </div>
+</div>
+
+<script>
+const TEACHER_PW = '2026';
+const STORAGE_KEY = 'worksheets_v1';
+let authed = false;
+
+function showPage(name) {
+  if (name === 'teacher') {
+    if (!authed) { activatePage('login'); updateNav('login'); return; }
+    activatePage('teacher'); updateNav('teacher'); return;
+  }
+  activatePage(name); updateNav(name);
+}
+function activatePage(name) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  const map = { home:'page-home', login:'page-login', teacher:'page-teacher' };
+  document.getElementById(map[name])?.classList.add('active');
+}
+function updateNav(name) {
+  const btns = document.querySelectorAll('.nav-btn');
+  btns[0].classList.toggle('active', name === 'home');
+  btns[1].classList.toggle('active', name === 'teacher' || name === 'login');
+  btns[1].textContent = authed ? '🏫 교사 페이지' : '🔒 교사 로그인';
+}
+function switchTab(name) {
+  document.querySelectorAll('.tab-btn').forEach((b,i) => b.classList.toggle('active', ['worksheet','notice'][i] === name));
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  document.getElementById('tab-' + name)?.classList.add('active');
+}
+function doLogin() {
+  const pw = document.getElementById('pw-input').value;
+  const err = document.getElementById('login-error');
+  if (pw === TEACHER_PW) {
+    authed = true; err.style.display = 'none';
+    document.getElementById('pw-input').value = '';
+    activatePage('teacher'); updateNav('teacher');
+  } else {
+    err.style.display = 'block';
+    document.getElementById('pw-input').value = '';
+  }
+}
+function refreshIframe() { const f = document.getElementById('teacher-iframe'); f.src = f.src; }
+function handleDragOver(e) { e.preventDefault(); document.getElementById('upload-zone').classList.add('dragover'); }
+function handleDragLeave() { document.getElementById('upload-zone').classList.remove('dragover'); }
+function handleDrop(e) { e.preventDefault(); document.getElementById('upload-zone').classList.remove('dragover'); handleFiles(e.dataTransfer.files); }
+
+function getFileIcon(name) {
+  const ext = name.split('.').pop().toLowerCase();
+  if (ext === 'pdf') return '📕';
+  if (['hwp','hwpx'].includes(ext)) return '📘';
+  if (['doc','docx'].includes(ext)) return '📄';
+  if (['ppt','pptx'].includes(ext)) return '📊';
+  if (['jpg','jpeg','png','gif','webp'].includes(ext)) return '🖼️';
+  if (['zip','rar'].includes(ext)) return '🗜️';
+  return '📎';
+}
+function handleFiles(files) {
+  if (!files || files.length === 0) return;
+  const list = loadWS(); let count = 0;
+  Array.from(files).forEach(file => {
+    const reader = new FileReader();
+    reader.onload = e => {
+      list.push({ id: Date.now() + Math.random(), name: file.name, date: new Date().toLocaleDateString('ko-KR'), url: e.target.result });
+      if (++count === files.length) { saveWS(list); renderWS(); showToast(`${files.length}개 활동지가 등록되었습니다 🎉`); }
+    };
+    reader.readAsDataURL(file);
+  });
+}
+function deleteWS(id) { saveWS(loadWS().filter(w => w.id !== id)); renderWS(); showToast('삭제되었습니다'); }
+
+function renderWS() {
+  const list = loadWS();
+  const emptyHTML = `<div class="ws-empty"><div class="ws-empty-icon">📭</div><p>아직 등록된 활동지가 없습니다.<br>교사가 활동지를 등록하면 여기서 다운로드할 수 있어요.</p></div>`;
+  const cardsHTML = (actions) => `<div class="ws-list">${list.map(ws => `
+    <div class="ws-card">
+      <div class="ws-info">
+        <div class="ws-icon">${getFileIcon(ws.name)}</div>
+        <div><div class="ws-name">${ws.name}</div><div class="ws-date">${ws.date} 등록</div></div>
+      </div>${actions(ws)}</div>`).join('')}</div>`;
+
+  document.getElementById('ws-list-home').innerHTML = list.length === 0 ? emptyHTML
+    : cardsHTML(ws => `<a class="dl-btn" href="${ws.url}" download="${ws.name}">⬇ 다운로드</a>`);
+  document.getElementById('ws-list-teacher').innerHTML = list.length === 0 ? ''
+    : `<div style="font-weight:700;margin-bottom:12px;color:var(--primary-dark);font-size:14px;">등록된 활동지 (${list.length}개)</div>`
+    + cardsHTML(ws => `<div class="ws-actions"><a class="dl-btn" href="${ws.url}" download="${ws.name}">⬇ 다운로드</a><button class="btn btn-danger" onclick="deleteWS(${ws.id})">🗑</button></div>`);
+}
+function loadWS() { try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]'); } catch { return []; } }
+function saveWS(list) { localStorage.setItem(STORAGE_KEY, JSON.stringify(list)); }
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = '✓ ' + msg; t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 3000);
+}
+renderWS();
+</script>
+</body>
+</html>

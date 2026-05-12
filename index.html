@@ -668,30 +668,6 @@ body::before {
       </div>
     </div>
 
-    <div class="section-title">🔑 교사 비밀번호 변경</div>
-    <div style="background:white;border:1.5px solid var(--border);border-radius:var(--radius);padding:24px;margin-bottom:44px;box-shadow:var(--shadow);">
-      <p style="font-size:13px;color:var(--muted);margin-bottom:16px;">마스터 비밀번호로 인증 후 교사 비밀번호를 변경할 수 있습니다.</p>
-      <div style="display:flex;flex-direction:column;gap:12px;max-width:400px;">
-        <div>
-          <label style="font-size:12px;font-weight:700;color:var(--text2);display:block;margin-bottom:6px;">🔐 마스터 비밀번호</label>
-          <input type="password" id="master-pw-input" placeholder="마스터 비밀번호 입력"
-            style="width:100%;padding:10px 14px;border:1.5px solid var(--border);border-radius:10px;font-size:14px;font-family:'Noto Sans KR',sans-serif;outline:none;">
-        </div>
-        <div>
-          <label style="font-size:12px;font-weight:700;color:var(--text2);display:block;margin-bottom:6px;">🆕 새 비밀번호</label>
-          <input type="password" id="new-pw-input" placeholder="새 교사 비밀번호 입력"
-            style="width:100%;padding:10px 14px;border:1.5px solid var(--border);border-radius:10px;font-size:14px;font-family:'Noto Sans KR',sans-serif;outline:none;">
-        </div>
-        <div>
-          <label style="font-size:12px;font-weight:700;color:var(--text2);display:block;margin-bottom:6px;">✅ 새 비밀번호 확인</label>
-          <input type="password" id="confirm-pw-input" placeholder="새 비밀번호 재입력"
-            style="width:100%;padding:10px 14px;border:1.5px solid var(--border);border-radius:10px;font-size:14px;font-family:'Noto Sans KR',sans-serif;outline:none;">
-        </div>
-        <div id="pw-change-msg" style="font-size:13px;font-weight:600;display:none;"></div>
-        <button class="btn" onclick="changePassword()" style="align-self:flex-start;">🔑 비밀번호 변경</button>
-      </div>
-    </div>
-
     <div class="section-title">📤 트랙별 활동지 등록</div>
     <div class="upload-tracks">
       <div class="upload-track-zone track-a-zone" id="upload-zone-a"
@@ -722,7 +698,7 @@ body::before {
 </div>
 
 <script>
-const TEACHER_PW = '2026';
+const TEACHER_PW = '17604';
 const STORAGE_KEY_A = 'worksheets_a_v1';
 const STORAGE_KEY_B = 'worksheets_b_v1';
 let authed = false;

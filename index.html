@@ -692,7 +692,11 @@ function doLogin() {
     document.getElementById('pw-input').value = '';
   }
 }
-function refreshIframe() { const f = document.getElementById('teacher-iframe'); f.src = f.src; }
+function refreshIframe() {
+  const f = document.getElementById('teacher-iframe');
+  const base = 'https://script.google.com/macros/s/AKfycbw9aP2HoQh8-uCiOq-XkMC3d-H1ZxsTiilcCdd3prAZBL-twn8J-qJO7Nig_KCFuc_t/exec';
+  f.src = base + '?t=' + Date.now();
+}
 function handleDragOverA(e) { e.preventDefault(); document.getElementById('upload-zone-a').classList.add('dragover'); }
 function handleDragLeaveA() { document.getElementById('upload-zone-a').classList.remove('dragover'); }
 function handleDropA(e) { e.preventDefault(); document.getElementById('upload-zone-a').classList.remove('dragover'); handleFiles(e.dataTransfer.files, 'a'); }

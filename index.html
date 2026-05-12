@@ -668,6 +668,30 @@ body::before {
       </div>
     </div>
 
+    <div class="section-title">🔑 교사 비밀번호 변경</div>
+    <div style="background:white;border:1.5px solid var(--border);border-radius:var(--radius);padding:24px;margin-bottom:44px;box-shadow:var(--shadow);">
+      <p style="font-size:13px;color:var(--muted);margin-bottom:16px;">마스터 비밀번호로 인증 후 교사 비밀번호를 변경할 수 있습니다.</p>
+      <div style="display:flex;flex-direction:column;gap:12px;max-width:400px;">
+        <div>
+          <label style="font-size:12px;font-weight:700;color:var(--text2);display:block;margin-bottom:6px;">🔐 마스터 비밀번호</label>
+          <input type="password" id="master-pw-input" placeholder="마스터 비밀번호 입력"
+            style="width:100%;padding:10px 14px;border:1.5px solid var(--border);border-radius:10px;font-size:14px;font-family:'Noto Sans KR',sans-serif;outline:none;">
+        </div>
+        <div>
+          <label style="font-size:12px;font-weight:700;color:var(--text2);display:block;margin-bottom:6px;">🆕 새 비밀번호</label>
+          <input type="password" id="new-pw-input" placeholder="새 교사 비밀번호 입력"
+            style="width:100%;padding:10px 14px;border:1.5px solid var(--border);border-radius:10px;font-size:14px;font-family:'Noto Sans KR',sans-serif;outline:none;">
+        </div>
+        <div>
+          <label style="font-size:12px;font-weight:700;color:var(--text2);display:block;margin-bottom:6px;">✅ 새 비밀번호 확인</label>
+          <input type="password" id="confirm-pw-input" placeholder="새 비밀번호 재입력"
+            style="width:100%;padding:10px 14px;border:1.5px solid var(--border);border-radius:10px;font-size:14px;font-family:'Noto Sans KR',sans-serif;outline:none;">
+        </div>
+        <div id="pw-change-msg" style="font-size:13px;font-weight:600;display:none;"></div>
+        <button class="btn" onclick="changePassword()" style="align-self:flex-start;">🔑 비밀번호 변경</button>
+      </div>
+    </div>
+
     <div class="section-title">📤 트랙별 활동지 등록</div>
     <div class="upload-tracks">
       <div class="upload-track-zone track-a-zone" id="upload-zone-a"
@@ -698,7 +722,7 @@ body::before {
 </div>
 
 <script>
-const TEACHER_PW = '17604';
+const TEACHER_PW = '2026';
 const STORAGE_KEY_A = 'worksheets_a_v1';
 const STORAGE_KEY_B = 'worksheets_b_v1';
 let authed = false;
@@ -738,7 +762,7 @@ function doLogin() {
     document.getElementById('pw-input').value = '';
   }
 }
-const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycby29k4GGZRmmiSuit812B7QZHfPn0HbBZaE5JG_2BLJpIdINXeQq-UDM9_xm1yEmU4L/exec';
+const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyrb2l-5gunx0VXmMaS6ab7dPld4RUW06FY55GVZ1xPIOLxi6EmsU5nF-zi9x8gsIxp/exec';
 
 function showLoading() {
   const el = document.getElementById('iframe-loading');
@@ -836,6 +860,30 @@ function renderWS() {
         : cardsHTML(ws => `<div class="ws-actions"><a class="${dlBtnClass}" href="${ws.url}" download="${ws.name}">⬇ 다운로드</a><button class="btn btn-danger" style="padding:7px 11px" onclick="deleteWS(\'${track}\',${ws.id})">🗑</button></div>`);
     }
   });
+}
+function changePassword() {
+  const master = document.getElementById('master-pw-input').value;
+  const newPw = document.getElementById('new-pw-input').value;
+  const confirm = document.getElementById('confirm-pw-input').value;
+  const msg = document.getElementById('pw-change-msg');
+  msg.style.display = 'block';
+  if (master !== MASTER_PW) {
+    msg.style.color = 'var(--red)'; msg.textContent = '❌ 마스터 비밀번호가 틀렸습니다.'; return;
+  }
+  if (!newPw || newPw.length < 4) {
+    msg.style.color = 'var(--red)'; msg.textContent = '❌ 새 비밀번호는 4자 이상이어야 합니다.'; return;
+  }
+  if (newPw !== confirm) {
+    msg.style.color = 'var(--red)'; msg.textContent = '❌ 새 비밀번호가 일치하지 않습니다.'; return;
+  }
+  TEACHER_PW = newPw;
+  localStorage.setItem('teacher_pw', newPw);
+  document.getElementById('master-pw-input').value = '';
+  document.getElementById('new-pw-input').value = '';
+  document.getElementById('confirm-pw-input').value = '';
+  msg.style.color = 'var(--green)'; msg.textContent = '✅ 비밀번호가 변경되었습니다!';
+  showToast('교사 비밀번호가 변경되었습니다 🎉');
+  setTimeout(() => { msg.style.display = 'none'; }, 3000);
 }
 function loadWS(track) { try { const k = track==='a' ? STORAGE_KEY_A : STORAGE_KEY_B; return JSON.parse(localStorage.getItem(k) || '[]'); } catch { return []; } }
 function saveWS(track, list) { const k = track==='a' ? STORAGE_KEY_A : STORAGE_KEY_B; localStorage.setItem(k, JSON.stringify(list)); }

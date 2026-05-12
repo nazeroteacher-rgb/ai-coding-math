@@ -413,7 +413,7 @@ body::before {
   cursor: pointer; transition: all 0.2s; box-shadow: 0 2px 8px rgba(232,71,42,0.2);
 }
 .refresh-btn:hover { transform: translateY(-1px); box-shadow: var(--glow); }
-#teacher-iframe { width: 100%; height: 640px; border: none; display: block; }
+#iframe-container iframe { width: 100%; height: 640px; border: none; display: block; }
 
 /* ── Upload ── */
 .upload-zone {
@@ -464,7 +464,7 @@ body::before {
   .tabs-wrap, .tab-content { padding: 0 12px; }
   .tab-panel { padding: 20px 14px; }
   .main { padding: 28px 14px; }
-  #teacher-iframe { height: 520px; }
+  #iframe-container iframe { height: 520px; }
 }
 </style>
 </head>
@@ -614,12 +614,7 @@ body::before {
         <div class="iframe-label">🗂️ 구글 드라이브 연동 — 실시간 제출 현황</div>
         <button class="refresh-btn" onclick="refreshIframe()">🔄 새로고침</button>
       </div>
-      <iframe
-        id="teacher-iframe"
-        src="https://script.google.com/macros/s/AKfycbw9aP2HoQh8-uCiOq-XkMC3d-H1ZxsTiilcCdd3prAZBL-twn8J-qJO7Nig_KCFuc_t/exec"
-        title="제출 현황"
-        allow="same-origin"
-      ></iframe>
+      <div id="iframe-container"></div>
     </div>
 
     <div class="section-title">📤 트랙별 활동지 등록</div>
@@ -660,7 +655,7 @@ let authed = false;
 function showPage(name) {
   if (name === 'teacher') {
     if (!authed) { activatePage('login'); updateNav('login'); return; }
-    activatePage('teacher'); updateNav('teacher'); return;
+    activatePage('teacher'); updateNav('teacher'); loadIframe(); return;
   }
   activatePage(name); updateNav(name);
 }
@@ -686,16 +681,31 @@ function doLogin() {
   if (pw === TEACHER_PW) {
     authed = true; err.style.display = 'none';
     document.getElementById('pw-input').value = '';
-    activatePage('teacher'); updateNav('teacher');
+    activatePage('teacher'); updateNav('teacher'); loadIframe();
   } else {
     err.style.display = 'block';
     document.getElementById('pw-input').value = '';
   }
 }
+const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbw9aP2HoQh8-uCiOq-XkMC3d-H1ZxsTiilcCdd3prAZBL-twn8J-qJO7Nig_KCFuc_t/exec';
+function loadIframe() {
+  const container = document.getElementById('iframe-container');
+  if (!container) return;
+  container.innerHTML = '';
+  const f = document.createElement('iframe');
+  f.src = SCRIPT_URL + '?t=' + Date.now();
+  f.title = '제출 현황';
+  f.setAttribute('allow', 'same-origin');
+  f.style.cssText = 'width:100%;height:640px;border:none;display:block;';
+  container.appendChild(f);
+}
 function refreshIframe() {
-  const f = document.getElementById('teacher-iframe');
-  const base = 'https://script.google.com/macros/s/AKfycbw9aP2HoQh8-uCiOq-XkMC3d-H1ZxsTiilcCdd3prAZBL-twn8J-qJO7Nig_KCFuc_t/exec';
-  f.src = base + '?t=' + Date.now();
+  const btn = document.querySelector('.refresh-btn');
+  if (btn) { btn.textContent = '⏳ 로딩 중...'; btn.disabled = true; }
+  loadIframe();
+  setTimeout(() => {
+    if (btn) { btn.textContent = '🔄 새로고침'; btn.disabled = false; }
+  }, 2000);
 }
 function handleDragOverA(e) { e.preventDefault(); document.getElementById('upload-zone-a').classList.add('dragover'); }
 function handleDragLeaveA() { document.getElementById('upload-zone-a').classList.remove('dragover'); }

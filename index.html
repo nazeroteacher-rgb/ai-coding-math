@@ -374,14 +374,10 @@ body::before {
   </div>
   <div class="tab-content">
     <div class="tab-panel active" id="tab-worksheet">
-      <div class="track-grid">
-        <div class="track-box track-a">
-          <div class="track-header"><div class="track-badge">A</div><div class="track-title">A 트랙 활동지</div></div>
-          <div id="ws-list-home-a"><div class="track-empty"><div class="track-empty-icon">📭</div><p>등록된 활동지가 없습니다</p></div></div>
-        </div>
-        <div class="track-box track-b">
-          <div class="track-header"><div class="track-badge">B</div><div class="track-title">B 트랙 활동지</div></div>
-          <div id="ws-list-home-b"><div class="track-empty"><div class="track-empty-icon">📭</div><p>등록된 활동지가 없습니다</p></div></div>
+      <div id="ws-iframe-container" style="position:relative;min-height:200px;">
+        <div id="ws-iframe-loading" style="display:flex;flex-direction:column;align-items:center;justify-content:center;padding:48px;gap:14px;">
+          <div style="width:36px;height:36px;border:3px solid #f0d8c8;border-top-color:var(--primary);border-radius:50%;animation:spin 0.8s linear infinite;"></div>
+          <div style="font-size:13px;color:var(--muted);font-weight:600;">활동지 불러오는 중...</div>
         </div>
       </div>
     </div>
@@ -474,7 +470,7 @@ body::before {
 
 <script>
 const TEACHER_PW = '17604';
-const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwtr0UgfdULuSjMEJFSJFIMy7AERoasVM5K5W2B-1wJYG0NFYdbskNjhAtbGfnEZ1o/exec';
+const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycby6zmJDw0h0jU7c6BCr5anMhR89olYLfJlfZGkpw2hSj0i9M9inetEnRrRweyk07Cpn/exec';
 let authed = false;
 
 function showPage(name) {
@@ -566,34 +562,55 @@ function handleFiles(files, track) {
     const reader = new FileReader();
     reader.onload = e => {
       list.push({ id: Date.now() + Math.random(), name: file.name, date: new Date().toLocaleDateString('ko-KR'), url: e.target.result });
-      if (++count === files.length) { saveWS(track, list); // 시트에서 활동지 불러오기
+      if (++count === files.length) { saveWS(track, list); // 홈화면 활동지 iframe 로드
 function loadWorksheetsFromSheet() {
-  fetch(SCRIPT_URL + '?action=getWorksheets')
+  const container = document.getElementById('ws-iframe-container');
+  if (!container) return;
+  const loading = document.getElementById('ws-iframe-loading');
+  const f = document.createElement('iframe');
+  f.src = SCRIPT_URL + '?action=homeWorksheets&t=' + Date.now();
+  f.style.cssText = 'width:100%;border:none;display:none;';
+  f.scrolling = 'no';
+  f.onload = () => {
+    if (loading) loading.style.display = 'none';
+    f.style.display = 'block';
+    // iframe 높이 자동 조절
+    try {
+      const h = f.contentDocument.body.scrollHeight;
+      f.style.height = (h + 20) + 'px';
+    } catch(e) {
+      f.style.height = '300px';
+    }
+  };
+  f.onerror = () => {
+    if (loading) loading.innerHTML = '<div style="color:#9c6b52;font-size:13px;padding:24px;">활동지를 불러오지 못했습니다</div>';
+  };
+  setTimeout(() => {
+    if (loading) loading.style.display = 'none';
+    f.style.display = 'block';
+    if (!f.style.height || f.style.height === '') f.style.height = '300px';
+  }, 10000);
+  container.appendChild(f);
+
+  // 교사 화면 활동지도 fetch로 불러오기
+  loadTeacherWorksheets();
+}
+
+function loadTeacherWorksheets() {
+  fetch(SCRIPT_URL + '?action=getWorksheets&t=' + Date.now())
     .then(r => r.json())
-    .then(data => renderWSFromSheet(data.worksheets || []))
+    .then(data => renderTeacherWS(data.worksheets || []))
     .catch(() => {});
 }
 
-function renderWSFromSheet(list) {
+function renderTeacherWS(list) {
   ['a','b'].forEach(track => {
     const label = track.toUpperCase();
     const filtered = list.filter(w => w.track === label);
     const dlBtnClass = track === 'a' ? 'dl-btn' : 'dl-btn dl-btn-b';
     const emptyHTML = '<div class="track-empty"><div class="track-empty-icon">📭</div><p>등록된 활동지가 없습니다</p></div>';
-    const cardsHTML = filtered.map(ws => `
-      <div class="ws-card">
-        <div class="ws-info">
-          <div class="ws-icon">📎</div>
-          <div><div class="ws-name">${ws.name}</div><div class="ws-date">${ws.date} 등록</div></div>
-        </div>
-        <a class="${dlBtnClass}" href="${ws.url}" target="_blank" rel="noreferrer">⬇ 다운로드</a>
-      </div>`).join('');
-
-    // 홈 화면
-    const homeEl = document.getElementById('ws-list-home-' + track);
-    if (homeEl) homeEl.innerHTML = filtered.length === 0 ? emptyHTML : '<div class="ws-list">' + cardsHTML + '</div>';
-
-    // 교사 화면
+    const teacherEl = document.getElementById('ws-list-teacher');
+    if (!teacherEl) return;
     const boxId = 'teacher-track-' + track;
     let box = document.getElementById(boxId);
     if (!box) {
@@ -601,24 +618,22 @@ function renderWSFromSheet(list) {
       box.id = boxId;
       box.className = 'track-box track-' + track;
       box.innerHTML = '<div class="track-header"><div class="track-badge">' + label + '</div><div class="track-title">' + label + ' 트랙 활동지</div></div><div class="track-inner-' + track + '"></div>';
-      const teacherEl = document.getElementById('ws-list-teacher');
-      if (teacherEl) teacherEl.appendChild(box);
+      teacherEl.appendChild(box);
     }
     const inner = box.querySelector('.track-inner-' + track);
-    if (inner) {
-      const teacherCards = filtered.map(ws => `
-        <div class="ws-card">
-          <div class="ws-info">
-            <div class="ws-icon">📎</div>
-            <div><div class="ws-name">${ws.name}</div><div class="ws-date">${ws.date} 등록</div></div>
-          </div>
-          <div class="ws-actions">
-            <a class="${dlBtnClass}" href="${ws.url}" target="_blank" rel="noreferrer">⬇ 미리보기</a>
-            <button class="btn btn-danger" style="padding:7px 11px" onclick="deleteWSFromSheet(${ws.rowIndex})">🗑</button>
-          </div>
-        </div>`).join('');
-      inner.innerHTML = filtered.length === 0 ? emptyHTML : '<div class="ws-list">' + teacherCards + '</div>';
-    }
+    if (!inner) return;
+    if (filtered.length === 0) { inner.innerHTML = emptyHTML; return; }
+    inner.innerHTML = '<div class="ws-list">' + filtered.map(ws => `
+      <div class="ws-card">
+        <div class="ws-info">
+          <div class="ws-icon">📎</div>
+          <div><div class="ws-name">${ws.name}</div><div class="ws-date">${ws.date} 등록</div></div>
+        </div>
+        <div class="ws-actions">
+          <a class="${dlBtnClass}" href="${ws.url}" target="_blank" rel="noreferrer">⬇ 미리보기</a>
+          <button class="btn btn-danger" style="padding:7px 11px" onclick="deleteWSFromSheet(${ws.rowIndex})">🗑</button>
+        </div>
+      </div>`).join('') + '</div>';
   });
 }
 
@@ -636,7 +651,7 @@ function addWSToSheet() {
       document.getElementById('ws-name-input').value = '';
       document.getElementById('ws-url-input').value = '';
       showToast(track + '트랙 활동지 등록 완료 🎉');
-      loadWorksheetsFromSheet();
+      loadTeacherWorksheets();
     })
     .catch(() => showToast('등록 중 오류가 발생했습니다'))
     .finally(() => { btn.disabled = false; btn.textContent = '✅ 등록'; });
@@ -656,34 +671,55 @@ loadWorksheetsFromSheet(); showToast(`${track.toUpperCase()}트랙 ${files.lengt
 }
 function deleteWS(track, id) {
   saveWS(track, loadWS(track).filter(w => w.id !== id));
-  // 시트에서 활동지 불러오기
+  // 홈화면 활동지 iframe 로드
 function loadWorksheetsFromSheet() {
-  fetch(SCRIPT_URL + '?action=getWorksheets')
+  const container = document.getElementById('ws-iframe-container');
+  if (!container) return;
+  const loading = document.getElementById('ws-iframe-loading');
+  const f = document.createElement('iframe');
+  f.src = SCRIPT_URL + '?action=homeWorksheets&t=' + Date.now();
+  f.style.cssText = 'width:100%;border:none;display:none;';
+  f.scrolling = 'no';
+  f.onload = () => {
+    if (loading) loading.style.display = 'none';
+    f.style.display = 'block';
+    // iframe 높이 자동 조절
+    try {
+      const h = f.contentDocument.body.scrollHeight;
+      f.style.height = (h + 20) + 'px';
+    } catch(e) {
+      f.style.height = '300px';
+    }
+  };
+  f.onerror = () => {
+    if (loading) loading.innerHTML = '<div style="color:#9c6b52;font-size:13px;padding:24px;">활동지를 불러오지 못했습니다</div>';
+  };
+  setTimeout(() => {
+    if (loading) loading.style.display = 'none';
+    f.style.display = 'block';
+    if (!f.style.height || f.style.height === '') f.style.height = '300px';
+  }, 10000);
+  container.appendChild(f);
+
+  // 교사 화면 활동지도 fetch로 불러오기
+  loadTeacherWorksheets();
+}
+
+function loadTeacherWorksheets() {
+  fetch(SCRIPT_URL + '?action=getWorksheets&t=' + Date.now())
     .then(r => r.json())
-    .then(data => renderWSFromSheet(data.worksheets || []))
+    .then(data => renderTeacherWS(data.worksheets || []))
     .catch(() => {});
 }
 
-function renderWSFromSheet(list) {
+function renderTeacherWS(list) {
   ['a','b'].forEach(track => {
     const label = track.toUpperCase();
     const filtered = list.filter(w => w.track === label);
     const dlBtnClass = track === 'a' ? 'dl-btn' : 'dl-btn dl-btn-b';
     const emptyHTML = '<div class="track-empty"><div class="track-empty-icon">📭</div><p>등록된 활동지가 없습니다</p></div>';
-    const cardsHTML = filtered.map(ws => `
-      <div class="ws-card">
-        <div class="ws-info">
-          <div class="ws-icon">📎</div>
-          <div><div class="ws-name">${ws.name}</div><div class="ws-date">${ws.date} 등록</div></div>
-        </div>
-        <a class="${dlBtnClass}" href="${ws.url}" target="_blank" rel="noreferrer">⬇ 다운로드</a>
-      </div>`).join('');
-
-    // 홈 화면
-    const homeEl = document.getElementById('ws-list-home-' + track);
-    if (homeEl) homeEl.innerHTML = filtered.length === 0 ? emptyHTML : '<div class="ws-list">' + cardsHTML + '</div>';
-
-    // 교사 화면
+    const teacherEl = document.getElementById('ws-list-teacher');
+    if (!teacherEl) return;
     const boxId = 'teacher-track-' + track;
     let box = document.getElementById(boxId);
     if (!box) {
@@ -691,24 +727,22 @@ function renderWSFromSheet(list) {
       box.id = boxId;
       box.className = 'track-box track-' + track;
       box.innerHTML = '<div class="track-header"><div class="track-badge">' + label + '</div><div class="track-title">' + label + ' 트랙 활동지</div></div><div class="track-inner-' + track + '"></div>';
-      const teacherEl = document.getElementById('ws-list-teacher');
-      if (teacherEl) teacherEl.appendChild(box);
+      teacherEl.appendChild(box);
     }
     const inner = box.querySelector('.track-inner-' + track);
-    if (inner) {
-      const teacherCards = filtered.map(ws => `
-        <div class="ws-card">
-          <div class="ws-info">
-            <div class="ws-icon">📎</div>
-            <div><div class="ws-name">${ws.name}</div><div class="ws-date">${ws.date} 등록</div></div>
-          </div>
-          <div class="ws-actions">
-            <a class="${dlBtnClass}" href="${ws.url}" target="_blank" rel="noreferrer">⬇ 미리보기</a>
-            <button class="btn btn-danger" style="padding:7px 11px" onclick="deleteWSFromSheet(${ws.rowIndex})">🗑</button>
-          </div>
-        </div>`).join('');
-      inner.innerHTML = filtered.length === 0 ? emptyHTML : '<div class="ws-list">' + teacherCards + '</div>';
-    }
+    if (!inner) return;
+    if (filtered.length === 0) { inner.innerHTML = emptyHTML; return; }
+    inner.innerHTML = '<div class="ws-list">' + filtered.map(ws => `
+      <div class="ws-card">
+        <div class="ws-info">
+          <div class="ws-icon">📎</div>
+          <div><div class="ws-name">${ws.name}</div><div class="ws-date">${ws.date} 등록</div></div>
+        </div>
+        <div class="ws-actions">
+          <a class="${dlBtnClass}" href="${ws.url}" target="_blank" rel="noreferrer">⬇ 미리보기</a>
+          <button class="btn btn-danger" style="padding:7px 11px" onclick="deleteWSFromSheet(${ws.rowIndex})">🗑</button>
+        </div>
+      </div>`).join('') + '</div>';
   });
 }
 
@@ -726,7 +760,7 @@ function addWSToSheet() {
       document.getElementById('ws-name-input').value = '';
       document.getElementById('ws-url-input').value = '';
       showToast(track + '트랙 활동지 등록 완료 🎉');
-      loadWorksheetsFromSheet();
+      loadTeacherWorksheets();
     })
     .catch(() => showToast('등록 중 오류가 발생했습니다'))
     .finally(() => { btn.disabled = false; btn.textContent = '✅ 등록'; });
@@ -783,34 +817,55 @@ function showToast(msg) {
   t.textContent = '✓ ' + msg; t.classList.add('show');
   setTimeout(() => t.classList.remove('show'), 3000);
 }
-// 시트에서 활동지 불러오기
+// 홈화면 활동지 iframe 로드
 function loadWorksheetsFromSheet() {
-  fetch(SCRIPT_URL + '?action=getWorksheets')
+  const container = document.getElementById('ws-iframe-container');
+  if (!container) return;
+  const loading = document.getElementById('ws-iframe-loading');
+  const f = document.createElement('iframe');
+  f.src = SCRIPT_URL + '?action=homeWorksheets&t=' + Date.now();
+  f.style.cssText = 'width:100%;border:none;display:none;';
+  f.scrolling = 'no';
+  f.onload = () => {
+    if (loading) loading.style.display = 'none';
+    f.style.display = 'block';
+    // iframe 높이 자동 조절
+    try {
+      const h = f.contentDocument.body.scrollHeight;
+      f.style.height = (h + 20) + 'px';
+    } catch(e) {
+      f.style.height = '300px';
+    }
+  };
+  f.onerror = () => {
+    if (loading) loading.innerHTML = '<div style="color:#9c6b52;font-size:13px;padding:24px;">활동지를 불러오지 못했습니다</div>';
+  };
+  setTimeout(() => {
+    if (loading) loading.style.display = 'none';
+    f.style.display = 'block';
+    if (!f.style.height || f.style.height === '') f.style.height = '300px';
+  }, 10000);
+  container.appendChild(f);
+
+  // 교사 화면 활동지도 fetch로 불러오기
+  loadTeacherWorksheets();
+}
+
+function loadTeacherWorksheets() {
+  fetch(SCRIPT_URL + '?action=getWorksheets&t=' + Date.now())
     .then(r => r.json())
-    .then(data => renderWSFromSheet(data.worksheets || []))
+    .then(data => renderTeacherWS(data.worksheets || []))
     .catch(() => {});
 }
 
-function renderWSFromSheet(list) {
+function renderTeacherWS(list) {
   ['a','b'].forEach(track => {
     const label = track.toUpperCase();
     const filtered = list.filter(w => w.track === label);
     const dlBtnClass = track === 'a' ? 'dl-btn' : 'dl-btn dl-btn-b';
     const emptyHTML = '<div class="track-empty"><div class="track-empty-icon">📭</div><p>등록된 활동지가 없습니다</p></div>';
-    const cardsHTML = filtered.map(ws => `
-      <div class="ws-card">
-        <div class="ws-info">
-          <div class="ws-icon">📎</div>
-          <div><div class="ws-name">${ws.name}</div><div class="ws-date">${ws.date} 등록</div></div>
-        </div>
-        <a class="${dlBtnClass}" href="${ws.url}" target="_blank" rel="noreferrer">⬇ 다운로드</a>
-      </div>`).join('');
-
-    // 홈 화면
-    const homeEl = document.getElementById('ws-list-home-' + track);
-    if (homeEl) homeEl.innerHTML = filtered.length === 0 ? emptyHTML : '<div class="ws-list">' + cardsHTML + '</div>';
-
-    // 교사 화면
+    const teacherEl = document.getElementById('ws-list-teacher');
+    if (!teacherEl) return;
     const boxId = 'teacher-track-' + track;
     let box = document.getElementById(boxId);
     if (!box) {
@@ -818,24 +873,22 @@ function renderWSFromSheet(list) {
       box.id = boxId;
       box.className = 'track-box track-' + track;
       box.innerHTML = '<div class="track-header"><div class="track-badge">' + label + '</div><div class="track-title">' + label + ' 트랙 활동지</div></div><div class="track-inner-' + track + '"></div>';
-      const teacherEl = document.getElementById('ws-list-teacher');
-      if (teacherEl) teacherEl.appendChild(box);
+      teacherEl.appendChild(box);
     }
     const inner = box.querySelector('.track-inner-' + track);
-    if (inner) {
-      const teacherCards = filtered.map(ws => `
-        <div class="ws-card">
-          <div class="ws-info">
-            <div class="ws-icon">📎</div>
-            <div><div class="ws-name">${ws.name}</div><div class="ws-date">${ws.date} 등록</div></div>
-          </div>
-          <div class="ws-actions">
-            <a class="${dlBtnClass}" href="${ws.url}" target="_blank" rel="noreferrer">⬇ 미리보기</a>
-            <button class="btn btn-danger" style="padding:7px 11px" onclick="deleteWSFromSheet(${ws.rowIndex})">🗑</button>
-          </div>
-        </div>`).join('');
-      inner.innerHTML = filtered.length === 0 ? emptyHTML : '<div class="ws-list">' + teacherCards + '</div>';
-    }
+    if (!inner) return;
+    if (filtered.length === 0) { inner.innerHTML = emptyHTML; return; }
+    inner.innerHTML = '<div class="ws-list">' + filtered.map(ws => `
+      <div class="ws-card">
+        <div class="ws-info">
+          <div class="ws-icon">📎</div>
+          <div><div class="ws-name">${ws.name}</div><div class="ws-date">${ws.date} 등록</div></div>
+        </div>
+        <div class="ws-actions">
+          <a class="${dlBtnClass}" href="${ws.url}" target="_blank" rel="noreferrer">⬇ 미리보기</a>
+          <button class="btn btn-danger" style="padding:7px 11px" onclick="deleteWSFromSheet(${ws.rowIndex})">🗑</button>
+        </div>
+      </div>`).join('') + '</div>';
   });
 }
 
@@ -853,7 +906,7 @@ function addWSToSheet() {
       document.getElementById('ws-name-input').value = '';
       document.getElementById('ws-url-input').value = '';
       showToast(track + '트랙 활동지 등록 완료 🎉');
-      loadWorksheetsFromSheet();
+      loadTeacherWorksheets();
     })
     .catch(() => showToast('등록 중 오류가 발생했습니다'))
     .finally(() => { btn.disabled = false; btn.textContent = '✅ 등록'; });

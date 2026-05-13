@@ -443,24 +443,29 @@ body::before {
     </div>
 
     <div class="section-title">📤 트랙별 활동지 등록</div>
-    <div class="upload-tracks">
-      <div class="upload-track-zone track-a-zone" id="upload-zone-a"
-        onclick="document.getElementById('file-input-a').click()"
-        ondragover="handleDragOverA(event)" ondragleave="handleDragLeaveA()" ondrop="handleDropA(event)">
-        <div class="zone-icon">📕</div>
-        <div class="zone-title">A 트랙 활동지</div>
-        <p>파일을 드래그하거나<br>클릭하여 선택</p>
-        <button class="btn" onclick="event.stopPropagation(); document.getElementById('file-input-a').click()">📁 A트랙 파일 선택</button>
-        <input type="file" id="file-input-a" class="upload-input" multiple onchange="handleFiles(this.files, 'a')">
-      </div>
-      <div class="upload-track-zone track-b-zone" id="upload-zone-b"
-        onclick="document.getElementById('file-input-b').click()"
-        ondragover="handleDragOverB(event)" ondragleave="handleDragLeaveB()" ondrop="handleDropB(event)">
-        <div class="zone-icon">📘</div>
-        <div class="zone-title">B 트랙 활동지</div>
-        <p>파일을 드래그하거나<br>클릭하여 선택</p>
-        <button class="btn btn-b" onclick="event.stopPropagation(); document.getElementById('file-input-b').click()">📁 B트랙 파일 선택</button>
-        <input type="file" id="file-input-b" class="upload-input" multiple onchange="handleFiles(this.files, 'b')">
+    <div style="background:white;border:1.5px solid var(--border);border-radius:var(--radius);padding:28px;margin-bottom:28px;box-shadow:var(--shadow);">
+      <p style="font-size:13px;color:var(--muted);margin-bottom:20px;">구글 드라이브에 파일을 올린 후 공유 링크를 입력하세요.<br>공유 설정: <strong>링크 있는 모든 사용자 → 뷰어</strong></p>
+      <div style="display:grid;grid-template-columns:120px 1fr 2fr auto;gap:12px;align-items:end;flex-wrap:wrap;">
+        <div>
+          <label style="font-size:12px;font-weight:700;color:var(--text2);display:block;margin-bottom:6px;">트랙 선택</label>
+          <select id="ws-track-select" style="width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:10px;font-size:14px;font-family:'Noto Sans KR',sans-serif;outline:none;background:var(--ivory);color:var(--text);cursor:pointer;">
+            <option value="A">A 트랙</option>
+            <option value="B">B 트랙</option>
+          </select>
+        </div>
+        <div>
+          <label style="font-size:12px;font-weight:700;color:var(--text2);display:block;margin-bottom:6px;">파일명</label>
+          <input type="text" id="ws-name-input" placeholder="예) AI코딩_활동지1.pdf"
+            style="width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:10px;font-size:14px;font-family:'Noto Sans KR',sans-serif;outline:none;">
+        </div>
+        <div>
+          <label style="font-size:12px;font-weight:700;color:var(--text2);display:block;margin-bottom:6px;">구글 드라이브 공유 링크</label>
+          <input type="text" id="ws-url-input" placeholder="https://drive.google.com/..."
+            style="width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:10px;font-size:14px;font-family:'Noto Sans KR',sans-serif;outline:none;">
+        </div>
+        <div>
+          <button id="ws-add-btn" class="btn" onclick="addWSToSheet()" style="white-space:nowrap;height:42px;">✅ 등록</button>
+        </div>
       </div>
     </div>
     <div class="track-grid" id="ws-list-teacher"></div>
@@ -469,9 +474,7 @@ body::before {
 
 <script>
 const TEACHER_PW = '17604';
-const STORAGE_KEY_A = 'worksheets_a_v1';
-const STORAGE_KEY_B = 'worksheets_b_v1';
-const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyYdZdtg2Ish3JunRYSSvetstWvS8eVNtv-Bn1xI19NqWb_Mj2W2KA62ETzTG8w0ULh/exec';
+const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwtr0UgfdULuSjMEJFSJFIMy7AERoasVM5K5W2B-1wJYG0NFYdbskNjhAtbGfnEZ1o/exec';
 let authed = false;
 
 function showPage(name) {
@@ -563,14 +566,180 @@ function handleFiles(files, track) {
     const reader = new FileReader();
     reader.onload = e => {
       list.push({ id: Date.now() + Math.random(), name: file.name, date: new Date().toLocaleDateString('ko-KR'), url: e.target.result });
-      if (++count === files.length) { saveWS(track, list); renderWS(); showToast(`${track.toUpperCase()}트랙 ${files.length}개 활동지 등록 완료 🎉`); }
+      if (++count === files.length) { saveWS(track, list); // 시트에서 활동지 불러오기
+function loadWorksheetsFromSheet() {
+  fetch(SCRIPT_URL + '?action=getWorksheets')
+    .then(r => r.json())
+    .then(data => renderWSFromSheet(data.worksheets || []))
+    .catch(() => {});
+}
+
+function renderWSFromSheet(list) {
+  ['a','b'].forEach(track => {
+    const label = track.toUpperCase();
+    const filtered = list.filter(w => w.track === label);
+    const dlBtnClass = track === 'a' ? 'dl-btn' : 'dl-btn dl-btn-b';
+    const emptyHTML = '<div class="track-empty"><div class="track-empty-icon">📭</div><p>등록된 활동지가 없습니다</p></div>';
+    const cardsHTML = filtered.map(ws => `
+      <div class="ws-card">
+        <div class="ws-info">
+          <div class="ws-icon">📎</div>
+          <div><div class="ws-name">${ws.name}</div><div class="ws-date">${ws.date} 등록</div></div>
+        </div>
+        <a class="${dlBtnClass}" href="${ws.url}" target="_blank" rel="noreferrer">⬇ 다운로드</a>
+      </div>`).join('');
+
+    // 홈 화면
+    const homeEl = document.getElementById('ws-list-home-' + track);
+    if (homeEl) homeEl.innerHTML = filtered.length === 0 ? emptyHTML : '<div class="ws-list">' + cardsHTML + '</div>';
+
+    // 교사 화면
+    const boxId = 'teacher-track-' + track;
+    let box = document.getElementById(boxId);
+    if (!box) {
+      box = document.createElement('div');
+      box.id = boxId;
+      box.className = 'track-box track-' + track;
+      box.innerHTML = '<div class="track-header"><div class="track-badge">' + label + '</div><div class="track-title">' + label + ' 트랙 활동지</div></div><div class="track-inner-' + track + '"></div>';
+      const teacherEl = document.getElementById('ws-list-teacher');
+      if (teacherEl) teacherEl.appendChild(box);
+    }
+    const inner = box.querySelector('.track-inner-' + track);
+    if (inner) {
+      const teacherCards = filtered.map(ws => `
+        <div class="ws-card">
+          <div class="ws-info">
+            <div class="ws-icon">📎</div>
+            <div><div class="ws-name">${ws.name}</div><div class="ws-date">${ws.date} 등록</div></div>
+          </div>
+          <div class="ws-actions">
+            <a class="${dlBtnClass}" href="${ws.url}" target="_blank" rel="noreferrer">⬇ 미리보기</a>
+            <button class="btn btn-danger" style="padding:7px 11px" onclick="deleteWSFromSheet(${ws.rowIndex})">🗑</button>
+          </div>
+        </div>`).join('');
+      inner.innerHTML = filtered.length === 0 ? emptyHTML : '<div class="ws-list">' + teacherCards + '</div>';
+    }
+  });
+}
+
+function addWSToSheet() {
+  const track = document.getElementById('ws-track-select').value;
+  const name = document.getElementById('ws-name-input').value.trim();
+  const url = document.getElementById('ws-url-input').value.trim();
+  if (!name || !url) { showToast('파일명과 링크를 모두 입력해주세요 ⚠️'); return; }
+  if (!url.startsWith('http')) { showToast('올바른 링크를 입력해주세요 ⚠️'); return; }
+  const btn = document.getElementById('ws-add-btn');
+  btn.disabled = true; btn.textContent = '등록 중...';
+  fetch(SCRIPT_URL + '?action=addWorksheet&track=' + encodeURIComponent(track) + '&name=' + encodeURIComponent(name) + '&url=' + encodeURIComponent(url))
+    .then(r => r.json())
+    .then(() => {
+      document.getElementById('ws-name-input').value = '';
+      document.getElementById('ws-url-input').value = '';
+      showToast(track + '트랙 활동지 등록 완료 🎉');
+      loadWorksheetsFromSheet();
+    })
+    .catch(() => showToast('등록 중 오류가 발생했습니다'))
+    .finally(() => { btn.disabled = false; btn.textContent = '✅ 등록'; });
+}
+
+function deleteWSFromSheet(rowIndex) {
+  if (!confirm('삭제하시겠습니까?')) return;
+  fetch(SCRIPT_URL + '?action=deleteWorksheet&rowIndex=' + rowIndex)
+    .then(() => { showToast('삭제되었습니다'); loadWorksheetsFromSheet(); })
+    .catch(() => showToast('삭제 중 오류가 발생했습니다'));
+}
+
+loadWorksheetsFromSheet(); showToast(`${track.toUpperCase()}트랙 ${files.length}개 활동지 등록 완료 🎉`); }
     };
     reader.readAsDataURL(file);
   });
 }
 function deleteWS(track, id) {
   saveWS(track, loadWS(track).filter(w => w.id !== id));
-  renderWS(); showToast('삭제되었습니다');
+  // 시트에서 활동지 불러오기
+function loadWorksheetsFromSheet() {
+  fetch(SCRIPT_URL + '?action=getWorksheets')
+    .then(r => r.json())
+    .then(data => renderWSFromSheet(data.worksheets || []))
+    .catch(() => {});
+}
+
+function renderWSFromSheet(list) {
+  ['a','b'].forEach(track => {
+    const label = track.toUpperCase();
+    const filtered = list.filter(w => w.track === label);
+    const dlBtnClass = track === 'a' ? 'dl-btn' : 'dl-btn dl-btn-b';
+    const emptyHTML = '<div class="track-empty"><div class="track-empty-icon">📭</div><p>등록된 활동지가 없습니다</p></div>';
+    const cardsHTML = filtered.map(ws => `
+      <div class="ws-card">
+        <div class="ws-info">
+          <div class="ws-icon">📎</div>
+          <div><div class="ws-name">${ws.name}</div><div class="ws-date">${ws.date} 등록</div></div>
+        </div>
+        <a class="${dlBtnClass}" href="${ws.url}" target="_blank" rel="noreferrer">⬇ 다운로드</a>
+      </div>`).join('');
+
+    // 홈 화면
+    const homeEl = document.getElementById('ws-list-home-' + track);
+    if (homeEl) homeEl.innerHTML = filtered.length === 0 ? emptyHTML : '<div class="ws-list">' + cardsHTML + '</div>';
+
+    // 교사 화면
+    const boxId = 'teacher-track-' + track;
+    let box = document.getElementById(boxId);
+    if (!box) {
+      box = document.createElement('div');
+      box.id = boxId;
+      box.className = 'track-box track-' + track;
+      box.innerHTML = '<div class="track-header"><div class="track-badge">' + label + '</div><div class="track-title">' + label + ' 트랙 활동지</div></div><div class="track-inner-' + track + '"></div>';
+      const teacherEl = document.getElementById('ws-list-teacher');
+      if (teacherEl) teacherEl.appendChild(box);
+    }
+    const inner = box.querySelector('.track-inner-' + track);
+    if (inner) {
+      const teacherCards = filtered.map(ws => `
+        <div class="ws-card">
+          <div class="ws-info">
+            <div class="ws-icon">📎</div>
+            <div><div class="ws-name">${ws.name}</div><div class="ws-date">${ws.date} 등록</div></div>
+          </div>
+          <div class="ws-actions">
+            <a class="${dlBtnClass}" href="${ws.url}" target="_blank" rel="noreferrer">⬇ 미리보기</a>
+            <button class="btn btn-danger" style="padding:7px 11px" onclick="deleteWSFromSheet(${ws.rowIndex})">🗑</button>
+          </div>
+        </div>`).join('');
+      inner.innerHTML = filtered.length === 0 ? emptyHTML : '<div class="ws-list">' + teacherCards + '</div>';
+    }
+  });
+}
+
+function addWSToSheet() {
+  const track = document.getElementById('ws-track-select').value;
+  const name = document.getElementById('ws-name-input').value.trim();
+  const url = document.getElementById('ws-url-input').value.trim();
+  if (!name || !url) { showToast('파일명과 링크를 모두 입력해주세요 ⚠️'); return; }
+  if (!url.startsWith('http')) { showToast('올바른 링크를 입력해주세요 ⚠️'); return; }
+  const btn = document.getElementById('ws-add-btn');
+  btn.disabled = true; btn.textContent = '등록 중...';
+  fetch(SCRIPT_URL + '?action=addWorksheet&track=' + encodeURIComponent(track) + '&name=' + encodeURIComponent(name) + '&url=' + encodeURIComponent(url))
+    .then(r => r.json())
+    .then(() => {
+      document.getElementById('ws-name-input').value = '';
+      document.getElementById('ws-url-input').value = '';
+      showToast(track + '트랙 활동지 등록 완료 🎉');
+      loadWorksheetsFromSheet();
+    })
+    .catch(() => showToast('등록 중 오류가 발생했습니다'))
+    .finally(() => { btn.disabled = false; btn.textContent = '✅ 등록'; });
+}
+
+function deleteWSFromSheet(rowIndex) {
+  if (!confirm('삭제하시겠습니까?')) return;
+  fetch(SCRIPT_URL + '?action=deleteWorksheet&rowIndex=' + rowIndex)
+    .then(() => { showToast('삭제되었습니다'); loadWorksheetsFromSheet(); })
+    .catch(() => showToast('삭제 중 오류가 발생했습니다'));
+}
+
+loadWorksheetsFromSheet(); showToast('삭제되었습니다');
 }
 function renderWS() {
   ['a', 'b'].forEach(track => {
@@ -614,7 +783,90 @@ function showToast(msg) {
   t.textContent = '✓ ' + msg; t.classList.add('show');
   setTimeout(() => t.classList.remove('show'), 3000);
 }
-renderWS();
+// 시트에서 활동지 불러오기
+function loadWorksheetsFromSheet() {
+  fetch(SCRIPT_URL + '?action=getWorksheets')
+    .then(r => r.json())
+    .then(data => renderWSFromSheet(data.worksheets || []))
+    .catch(() => {});
+}
+
+function renderWSFromSheet(list) {
+  ['a','b'].forEach(track => {
+    const label = track.toUpperCase();
+    const filtered = list.filter(w => w.track === label);
+    const dlBtnClass = track === 'a' ? 'dl-btn' : 'dl-btn dl-btn-b';
+    const emptyHTML = '<div class="track-empty"><div class="track-empty-icon">📭</div><p>등록된 활동지가 없습니다</p></div>';
+    const cardsHTML = filtered.map(ws => `
+      <div class="ws-card">
+        <div class="ws-info">
+          <div class="ws-icon">📎</div>
+          <div><div class="ws-name">${ws.name}</div><div class="ws-date">${ws.date} 등록</div></div>
+        </div>
+        <a class="${dlBtnClass}" href="${ws.url}" target="_blank" rel="noreferrer">⬇ 다운로드</a>
+      </div>`).join('');
+
+    // 홈 화면
+    const homeEl = document.getElementById('ws-list-home-' + track);
+    if (homeEl) homeEl.innerHTML = filtered.length === 0 ? emptyHTML : '<div class="ws-list">' + cardsHTML + '</div>';
+
+    // 교사 화면
+    const boxId = 'teacher-track-' + track;
+    let box = document.getElementById(boxId);
+    if (!box) {
+      box = document.createElement('div');
+      box.id = boxId;
+      box.className = 'track-box track-' + track;
+      box.innerHTML = '<div class="track-header"><div class="track-badge">' + label + '</div><div class="track-title">' + label + ' 트랙 활동지</div></div><div class="track-inner-' + track + '"></div>';
+      const teacherEl = document.getElementById('ws-list-teacher');
+      if (teacherEl) teacherEl.appendChild(box);
+    }
+    const inner = box.querySelector('.track-inner-' + track);
+    if (inner) {
+      const teacherCards = filtered.map(ws => `
+        <div class="ws-card">
+          <div class="ws-info">
+            <div class="ws-icon">📎</div>
+            <div><div class="ws-name">${ws.name}</div><div class="ws-date">${ws.date} 등록</div></div>
+          </div>
+          <div class="ws-actions">
+            <a class="${dlBtnClass}" href="${ws.url}" target="_blank" rel="noreferrer">⬇ 미리보기</a>
+            <button class="btn btn-danger" style="padding:7px 11px" onclick="deleteWSFromSheet(${ws.rowIndex})">🗑</button>
+          </div>
+        </div>`).join('');
+      inner.innerHTML = filtered.length === 0 ? emptyHTML : '<div class="ws-list">' + teacherCards + '</div>';
+    }
+  });
+}
+
+function addWSToSheet() {
+  const track = document.getElementById('ws-track-select').value;
+  const name = document.getElementById('ws-name-input').value.trim();
+  const url = document.getElementById('ws-url-input').value.trim();
+  if (!name || !url) { showToast('파일명과 링크를 모두 입력해주세요 ⚠️'); return; }
+  if (!url.startsWith('http')) { showToast('올바른 링크를 입력해주세요 ⚠️'); return; }
+  const btn = document.getElementById('ws-add-btn');
+  btn.disabled = true; btn.textContent = '등록 중...';
+  fetch(SCRIPT_URL + '?action=addWorksheet&track=' + encodeURIComponent(track) + '&name=' + encodeURIComponent(name) + '&url=' + encodeURIComponent(url))
+    .then(r => r.json())
+    .then(() => {
+      document.getElementById('ws-name-input').value = '';
+      document.getElementById('ws-url-input').value = '';
+      showToast(track + '트랙 활동지 등록 완료 🎉');
+      loadWorksheetsFromSheet();
+    })
+    .catch(() => showToast('등록 중 오류가 발생했습니다'))
+    .finally(() => { btn.disabled = false; btn.textContent = '✅ 등록'; });
+}
+
+function deleteWSFromSheet(rowIndex) {
+  if (!confirm('삭제하시겠습니까?')) return;
+  fetch(SCRIPT_URL + '?action=deleteWorksheet&rowIndex=' + rowIndex)
+    .then(() => { showToast('삭제되었습니다'); loadWorksheetsFromSheet(); })
+    .catch(() => showToast('삭제 중 오류가 발생했습니다'));
+}
+
+loadWorksheetsFromSheet();
 </script>
 </body>
 </html>
